@@ -132,19 +132,13 @@ const $=id=>document.getElementById(id);
 let index=0,playing=false,done=false,step=0,practiceStep=0;
 let soundEnabled=true;
 function say(s){
-  if(!soundEnabled || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return Promise.resolve();
-  return new Promise(resolve=>{
-    let finished=false;
-    const finish=()=>{if(finished)return;finished=true;clearTimeout(timer);resolve()};
-    const timer=setTimeout(()=>{try{speechSynthesis.cancel()}catch(e){}finish()},4500);
-    try{
-      speechSynthesis.cancel();
-      const u=new SpeechSynthesisUtterance(s);
-      u.lang='ru-RU';u.rate=.88;
-      u.onend=finish;u.onerror=finish;
-      speechSynthesis.speak(u);
-    }catch(e){finish()}
-  });
+  if(!soundEnabled || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(s);
+    u.lang='ru-RU';u.rate=.96;
+    speechSynthesis.speak(u);
+  }catch(e){}
 }
 function stopSpeech(){if(window.speechSynthesis)speechSynthesis.cancel()}
 function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
@@ -222,7 +216,7 @@ async function flyBeakTo(target, facing='left', frame=0, duration=1800){
   {left:(from.left+(left-from.left)*.5)+'px',top:(from.top+(top-from.top)*.5-34)+'px',transform:facing==='left'?'scaleX(-1) translateY(-5px)':'scaleX(1) translateY(-5px)',offset:.5},
   {left:left+'px',top:top+'px',transform:facing==='left'?'scaleX(-1)':'scaleX(1)'}
  ],{duration,easing:'ease-in-out',fill:'forwards'});
- await anim.finished;bird.style.left=left+'px';bird.style.top=top+'px';
+ await anim.finished.catch(()=>{});bird.style.left=left+'px';bird.style.top=top+'px';
  bird.dataset.flying='1';bird.classList.remove('wingbeat');
 }
 function attachDigit(value,color='red'){
@@ -263,7 +257,7 @@ async function moveBirdTo(target,facing='left',frame=0,duration=1500,route='dire
    if(digit)digit.sync();
    await wait(40);
  }
- await anim.finished;
+ await anim.finished.catch(()=>{});
  bird.style.left=left+'px';bird.style.top=top+'px';bird.style.transform=facing==='left'?'scaleX(-1)':'scaleX(1)';bird.classList.remove('wingbeat');
  if(digit)digit.sync();
 }
@@ -271,8 +265,8 @@ async function returnBirdHome(){
  const bird=$('bird'),zone=$('birdZone'),r=bird.getBoundingClientRect(),z=zone.getBoundingClientRect(),w=birdSize();
  bird.classList.add('wingbeat');
  const anim=bird.animate([{left:r.left+'px',top:r.top+'px'},{left:(z.left+(z.width-w)/2)+'px',top:(z.top+8)+'px'}],
- {duration:1450,easing:'ease-in-out',fill:'forwards'});
- await anim.finished;bird.classList.remove('wingbeat');
+ {duration:650,easing:'ease-in-out',fill:'forwards'});
+ await anim.finished.catch(()=>{});bird.classList.remove('wingbeat');
  bird.style.position='';bird.style.left='';bird.style.top='';bird.style.width='';bird.style.height='';
  bird.style.margin='';bird.style.zIndex='';bird.style.transform='';bird.dataset.flying='';
  spriteFrame(0);
@@ -281,45 +275,44 @@ async function animateSolution(){
  if(tasks[index].mode!=='demo'){startPractice();return;}if(playing||done)return;playing=true;$('show').disabled=true;
  const t=tasks[index],ones=t.b;
  setInstruction('Шаг 1. Рассмотрим число '+t.a+'.','Посмотри: в числе '+t.a+' один десяток и '+unitCountPhrase(ones)+'.');
- await say('Посмотри: в числе '+t.a+' один десяток и '+unitCountPhrase(ones)+'.');
- await say('Нам нужно вычесть '+subtractUnitPhrase(ones)+'. Десяток мы не трогаем.');
+ say('Посмотри: в числе '+t.a+' один десяток и '+unitCountPhrase(ones)+'. Нам нужно вычесть '+subtractUnitPhrase(ones)+'. Десяток мы не трогаем.');
 
  // Approach the units from the right, with the beak pointing left.
  // The body remains outside the tens column, so the example stays readable.
  setInstruction('Шаг 2. Вычитаем единицы.','');
- await flyBeakTo($('secondU'),'left',0,1900);
- await wait(500);
+ await flyBeakTo($('secondU'),'left',0,800);
+ await wait(180);
  spriteFrame(2);$('bird').classList.add('peck');
  setInstruction('Птичка вычитает единицы.','');
- await wait(1750);$('bird').classList.remove('peck');
+ await wait(450);$('bird').classList.remove('peck');
 
  // The red digit is a separate carried object attached to the beak, not to the bird's body.
  const six=attachDigit(String(ones),'red');
  setInstruction('Единицы отправляются в дупло.','');
- await moveBirdTo($('hole'),'left',0,1750,'direct',six);
- await wait(350);
+ await moveBirdTo($('hole'),'left',0,700,'direct',six);
+ await wait(120);
  spriteFrame(3);
  setInstruction('Шаг 3. '+ones+' − '+ones+' = 0.',numberWord(ones).charAt(0).toUpperCase()+numberWord(ones).slice(1)+' минус '+numberWord(ones)+' равно ноль.');
- await say(numberWord(ones).charAt(0).toUpperCase()+numberWord(ones).slice(1)+' минус '+numberWord(ones)+' равно ноль.');
+ say(numberWord(ones).charAt(0).toUpperCase()+numberWord(ones).slice(1)+' минус '+numberWord(ones)+' равно ноль.');
  const holeRect=$('hole').getBoundingClientRect(),digitRect=six.el.getBoundingClientRect();
  const fall=six.el.animate([
   {left:digitRect.left+'px',top:digitRect.top+'px',transform:'scale(1)',opacity:1},
   {left:(holeRect.left+holeRect.width/2-12)+'px',top:(holeRect.top+18)+'px',transform:'scale(.45)',opacity:0}
- ],{duration:1050,easing:'ease-in',fill:'forwards'});
- await fall.finished;six.el.remove();
+ ],{duration:450,easing:'ease-in',fill:'forwards'});
+ await fall.finished.catch(()=>{});six.el.remove();
  $('answerU').textContent='0';$('answerU').classList.add('filled');
- await wait(850);
+ await wait(200);
 
  // Move around the bottom edge, then approach the tens from the left.
  setInstruction('Шаг 4. Записываем оставшийся десяток.','');
- await moveBirdTo($('firstT'),'right',0,1900,'around-bottom');
- await wait(350);
+ await moveBirdTo($('firstT'),'right',0,750,'around-bottom');
+ await wait(120);
  $('firstT').style.opacity='.2';
  spriteFrame(7);
  const one=attachDigit('1','blue');
  setInstruction('Один десяток записываем в ответ.','');
- await moveBirdTo($('answerT'),'right',7,1650,'direct',one);
- await wait(400);
+ await moveBirdTo($('answerT'),'right',7,650,'direct',one);
+ await wait(150);
  one.el.remove();$('firstT').style.opacity='1';
  $('answerT').textContent='1';$('answerT').classList.add('filled');
  await returnBirdHome();
@@ -328,7 +321,7 @@ async function animateSolution(){
  $('feedback').textContent=t.a+' − '+t.b+' = 10. Молодец!';
  $('tileCaption').textContent='ЕДИНИЦЫ: '+ones+' − '+ones+' = 0 · 1 ДЕСЯТОК ОСТАЛСЯ';
  $('show').hidden=true;
- await say('Остался один десяток. Это число десять! Ура! Мы справились! Молодец!');
+ say('Остался один десяток. Это число десять! Ура! Мы справились! Молодец!');
  $('next').hidden=false;$('next').disabled=false;
 }
 function startPractice(){
