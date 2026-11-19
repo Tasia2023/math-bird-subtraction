@@ -132,13 +132,18 @@ const $=id=>document.getElementById(id);
 let index=0,playing=false,done=false,step=0,practiceStep=0;
 let soundEnabled=true;
 function say(s){
-  if(!soundEnabled || !window.speechSynthesis) return Promise.resolve();
-  speechSynthesis.cancel();
+  if(!soundEnabled || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return Promise.resolve();
   return new Promise(resolve=>{
-    const u=new SpeechSynthesisUtterance(s);
-    u.lang='ru-RU';u.rate=.88;
-    u.onend=resolve;u.onerror=resolve;
-    speechSynthesis.speak(u);
+    let finished=false;
+    const finish=()=>{if(finished)return;finished=true;clearTimeout(timer);resolve()};
+    const timer=setTimeout(()=>{try{speechSynthesis.cancel()}catch(e){}finish()},4500);
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(s);
+      u.lang='ru-RU';u.rate=.88;
+      u.onend=finish;u.onerror=finish;
+      speechSynthesis.speak(u);
+    }catch(e){finish()}
   });
 }
 function stopSpeech(){if(window.speechSynthesis)speechSynthesis.cancel()}
