@@ -255,7 +255,7 @@ async function moveBirdTo(target,facing='left',frame=0,duration=1500,route='dire
  const start=performance.now();
  while(performance.now()-start<duration){
    if(digit)digit.sync();
-   await wait(40);
+   await wait(16);
  }
  await anim.finished.catch(()=>{});
  bird.style.left=left+'px';bird.style.top=top+'px';bird.style.transform=facing==='left'?'scaleX(-1)':'scaleX(1)';bird.classList.remove('wingbeat');
@@ -265,7 +265,7 @@ async function returnBirdHome(){
  const bird=$('bird'),zone=$('birdZone'),r=bird.getBoundingClientRect(),z=zone.getBoundingClientRect(),w=birdSize();
  bird.classList.add('wingbeat');
  const anim=bird.animate([{left:r.left+'px',top:r.top+'px'},{left:(z.left+(z.width-w)/2)+'px',top:(z.top+8)+'px'}],
- {duration:650,easing:'ease-in-out',fill:'forwards'});
+ {duration:900,easing:'ease-in-out',fill:'forwards'});
  await anim.finished.catch(()=>{});bird.classList.remove('wingbeat');
  bird.style.position='';bird.style.left='';bird.style.top='';bird.style.width='';bird.style.height='';
  bird.style.margin='';bird.style.zIndex='';bird.style.transform='';bird.dataset.flying='';
@@ -280,17 +280,17 @@ async function animateSolution(){
  // Approach the units from the right, with the beak pointing left.
  // The body remains outside the tens column, so the example stays readable.
  setInstruction('Шаг 2. Вычитаем единицы.','');
- await flyBeakTo($('secondU'),'left',0,800);
- await wait(180);
+ await flyBeakTo($('secondU'),'left',0,1250);
+ await wait(300);
  spriteFrame(2);$('bird').classList.add('peck');
  setInstruction('Птичка вычитает единицы.','');
- await wait(450);$('bird').classList.remove('peck');
+ await wait(650);$('bird').classList.remove('peck');
 
  // The red digit is a separate carried object attached to the beak, not to the bird's body.
  const six=attachDigit(String(ones),'red');
  setInstruction('Единицы отправляются в дупло.','');
- await moveBirdTo($('hole'),'left',0,700,'direct',six);
- await wait(120);
+ await moveBirdTo($('hole'),'left',0,1150,'direct',six);
+ await wait(260);
  spriteFrame(3);
  setInstruction('Шаг 3. '+ones+' − '+ones+' = 0.',numberWord(ones).charAt(0).toUpperCase()+numberWord(ones).slice(1)+' минус '+numberWord(ones)+' равно ноль.');
  say(numberWord(ones).charAt(0).toUpperCase()+numberWord(ones).slice(1)+' минус '+numberWord(ones)+' равно ноль.');
@@ -298,21 +298,21 @@ async function animateSolution(){
  const fall=six.el.animate([
   {left:digitRect.left+'px',top:digitRect.top+'px',transform:'scale(1)',opacity:1},
   {left:(holeRect.left+holeRect.width/2-12)+'px',top:(holeRect.top+18)+'px',transform:'scale(.45)',opacity:0}
- ],{duration:450,easing:'ease-in',fill:'forwards'});
+  ],{duration:700,easing:'ease-in',fill:'forwards'});
  await fall.finished.catch(()=>{});six.el.remove();
  $('answerU').textContent='0';$('answerU').classList.add('filled');
- await wait(200);
+ await wait(450);
 
  // Move around the bottom edge, then approach the tens from the left.
  setInstruction('Шаг 4. Записываем оставшийся десяток.','');
- await moveBirdTo($('firstT'),'right',0,750,'around-bottom');
- await wait(120);
+ await moveBirdTo($('firstT'),'right',0,1250,'around-bottom');
+ await wait(280);
  $('firstT').style.opacity='.2';
  spriteFrame(7);
  const one=attachDigit('1','blue');
  setInstruction('Один десяток записываем в ответ.','');
- await moveBirdTo($('answerT'),'right',7,650,'direct',one);
- await wait(150);
+ await moveBirdTo($('answerT'),'right',7,1100,'direct',one);
+ await wait(300);
  one.el.remove();$('firstT').style.opacity='1';
  $('answerT').textContent='1';$('answerT').classList.add('filled');
  await returnBirdHome();
@@ -366,6 +366,6 @@ $('soundToggle').onclick=()=>{
   if(!soundEnabled) stopSpeech();
 };
 $('show').onclick=animateSolution;
-$('next').onclick=()=>{if(!done)return;if(index<tasks.length-1){index++;load();}else{$('next').hidden=true;setInstruction('Ты прошёл все задания!','Ты большой молодец!');$('feedback').textContent='Все 13 примеров выполнены!';say('Ты прошёл все задания! Молодец!');}};
+$('next').onclick=()=>{if(!done)return;stopSpeech();if(index<tasks.length-1){index++;load();}else{$('next').hidden=true;setInstruction('Ты прошёл все задания!','Ты большой молодец!');$('feedback').textContent='Все 13 примеров выполнены!';say('Ты прошёл все задания! Молодец!');}};
 load();
 </script></body></html>
